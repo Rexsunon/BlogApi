@@ -76,13 +76,33 @@ namespace Blog_api.Controllers
         // POST: api/Post
         // To protect from overposting attacks, enable the specific properties you want to bind to, for
         // more details, see https://go.microsoft.com/fwlink/?linkid=2123754.
-        [HttpPost]
-        public async Task<ActionResult<Post>> PostPost(Post post)
+        [HttpPost("{id}")]
+        public async Task<ActionResult<Post>> PostPost(int id, Post post)
         {
-            _context.Posts.Add(post);
+            // Get user by id
+            var user = await _context.Users.FindAsync(id);
+
+            // Check if user exist
+            if (user == null)
+            {
+                return NotFound();
+            }
+
+            var newPost = new Post()
+            {
+                Title = post.Title,
+                Body = post.Body,
+                Author = user.FirstName + " " + user.LastName,
+                CreatedAt = DateTime.Now
+            };
+
+            // Add post to user posts
+            user.Posts.Add(newPost);
+
+            _context.Posts.Add(newPost);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction("GetPost", new { id = post.Id }, post);
+            return CreatedAtAction(nameof(GetPost), new { id = post.Id }, newPost);
         }
 
         // DELETE: api/Post/5
